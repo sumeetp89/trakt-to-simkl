@@ -9,7 +9,13 @@ It transfers:
 - ratings (movies and shows)
 - your watchlist (it becomes Plan to Watch on Simkl)
 
-It does not transfer custom lists, collections, comments or playback progress. Nothing on Trakt is changed or deleted, and a full backup is saved as `trakt_backup.json` before anything is sent to Simkl.
+## Limits
+
+- Custom lists, collections, comments and playback progress are not transferred.
+- Only the latest watch date of each movie or episode is sent. Trakt's rewatch history is not kept, and Simkl rewatches need a PRO plan anyway.
+- Anime episode numbering differs between Trakt (TVDB seasons) and Simkl. The script tells Simkl to read the numbers as TVDB seasons, but spot-check a few multi-season anime on your profile afterwards.
+
+Nothing on Trakt is changed or deleted, and a full backup is saved as `trakt_backup.json` before anything is sent to Simkl.
 
 This is an independent tool and is not affiliated with Trakt or Simkl.
 

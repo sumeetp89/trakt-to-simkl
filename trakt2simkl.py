@@ -8,6 +8,8 @@ Needs: a Trakt development app Client ID (PKCE, no secret) and a Simkl app Clien
 Run:   python3 trakt2simkl.py              full transfer
        python3 trakt2simkl.py --dry-run    only download from Trakt and save the backup
 
+Limits: only the latest watch date per movie/episode is sent (Trakt rewatch history is not
+kept; Simkl rewatches need PRO). Custom lists, collections and comments are not moved.
 Safe to re-run: items Simkl already has are left alone on a free account.
 Optional: set TRAKT_CLIENT_ID and SIMKL_CLIENT_ID in the environment to skip the prompts.
 """
@@ -22,7 +24,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-UA = "trakt2simkl/2.0"
+UA = "trakt2simkl/2.1"
+APP_NAME = "trakt-to-simkl"
+APP_VERSION = "2.1"
 TRAKT = "https://api.trakt.tv"
 SIMKL = "https://api.simkl.com"
 DRY = "--dry-run" in sys.argv
@@ -173,8 +177,10 @@ def label(item):
 
 def push(sh, path, payload, name):
     """POST to Simkl. Returns the response dict, or None on failure."""
-    st, r = http("POST", f"{SIMKL}{path}", headers=sh, body=payload)
-    time.sleep(1.0)
+    q = urllib.parse.urlencode({"client_id": sh.get("simkl-api-key", ""),
+                                "app-name": APP_NAME, "app-version": APP_VERSION})
+    st, r = http("POST", f"{SIMKL}{path}?{q}", headers=sh, body=payload)
+    time.sleep(1.2)  # Simkl allows 1 POST per second
     if st not in (200, 201) or not isinstance(r, dict):
         print(f"  {name}: HTTP {st} {str(r)[:200]}")
         return None
@@ -266,6 +272,7 @@ def main():
     shows = []
     for g in grouped.values():
         d = base(g["show"], g["ids"])
+        d["use_tvdb_anime_seasons"] = True  # Trakt numbers anime per TVDB season
         by_season = {}
         for (sn, en), when in sorted(g["eps"].items()):
             by_season.setdefault(sn, []).append({"number": en, "watched_at": when or None})
